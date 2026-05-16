@@ -527,12 +527,13 @@ require('lazy').setup({
         'lua-language-server', -- Lua Language server
         'stylua', -- Used to format Lua code
         'clangd',
-        'bacon',
         'pyright',
         'gopls',
         'actionlint',
         'mesonlsp',
         'checkmake',
+        'rust-analyzer',
+        'marksman',
         -- You can add other tools here that you want Mason to install
       })
 
@@ -544,10 +545,28 @@ require('lazy').setup({
         vim.lsp.enable(name)
       end
 
+      vim.lsp.config('omnisharp-mono', {})
+      vim.lsp.enable 'omnisharp-mono'
       -- Special godot config, mason does not recognize it right now
       vim.lsp.config('gdscript', {})
       vim.lsp.enable 'gdscript'
 
+      -- rust-analyzer specific config to make clippy check on save
+      vim.lsp.config('rust_analyzer', {
+        cmd = { 'rust-analyzer' },
+        filetypes = { 'rust' },
+        root_markers = { 'Cargo.toml', 'Cargo.lock' },
+        settings = {
+          ['rust-analyzer'] = {
+            cargo = { allFeatures = true },
+            checkOnSave = true,
+            check = {
+              command = 'clippy',
+            },
+          },
+        },
+      })
+      vim.lsp.enable 'rust_analyzer'
       -- Special Lua Config, as recommended by neovim help docs
       vim.lsp.config('lua_ls', {
         on_init = function(client)
@@ -709,14 +728,17 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'rose-pine/neovim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    config = function() vim.cmd.colorscheme 'rose-pine' end,
+  -- Using lazy.nvim
+  {
+    'ribru17/bamboo.nvim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('bamboo').setup {
+        -- optional configuration here
+      }
+      require('bamboo').load()
+    end,
   },
 
   -- Highlight todo, notes, etc in comments
@@ -789,7 +811,28 @@ require('lazy').setup({
       })
     end,
   },
-
+  {
+    'nvim-java/nvim-java',
+    config = function()
+      require('java').setup {
+        spring_boot_tools = {
+          enable = false,
+        },
+      }
+      vim.lsp.config('jdtls', {
+        settings = {
+          java = {
+            project = {
+              referencedLibraries = {
+                vim.fn.expand '~' .. '/Projects/capstone/javafx-sdk-21.0.5/lib/*.jar',
+              },
+            },
+          },
+        },
+      })
+      vim.lsp.enable 'jdtls'
+    end,
+  },
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
